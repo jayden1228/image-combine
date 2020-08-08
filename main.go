@@ -1,108 +1,62 @@
 package main
 
 import (
-	"image"
-	"image/draw"
-	"image/jpeg"
+	"image-combine/image"
+	"image-combine/model"
+	"image-combine/walk"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 func main() {
-
-	tempImg1, err := LoadImage("./Antelope canyon Close.jpg")
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	tempImg2, err := LoadImage("./Antelope canyon Far.jpg")
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	imgs := []ImageLayer{
-		ImageLayer{
-			Image: tempImg1,
-			XPos:  0,
-			YPos:  0,
-		},
-		ImageLayer{
-			Image: tempImg2,
-			XPos:  1280,
-			YPos:  0,
-		},
-	}
-
-	bg := BgProperty{
-		Width:  1280 * 2,
-		Length: 720,
-	}
-
-	res, err := ImageCombine(imgs, bg)
-	if err != nil {
-		log.Printf("Error generating banner: %+v\n", err)
-	}
-
-	err = SaveImage("output.png", res)
-	if err != nil {
-		log.Printf("Error creating image file: %+v\n", err)
-		return
-	}
-
-	log.Println("Image Generated")
+	// 遍历所有目录
+	result, _ := walk.GetAllFileIncludeSubFolder("/Users/chuangkegongchang/Downloads/Reveal")
+	// 过滤空目录
+	result = model.FilterEmptyImages(result)
+	// 拼接图片
+	CombineSprites(result, 1280, 720)
 }
 
-//素材
-type ImageLayer struct {
-	Image image.Image
-	XPos  int
-	YPos  int
-}
+func CombineSprites(resources []model.ImageResource, width int, height int) {
+	for _, v := range resources {
+		var deletePath []string
+		_, combineName := filepath.Split(v.Dir)
+		combineFileName := combineName + ".jpg"
 
-//背景
-type BgProperty struct {
-	Width  int
-	Length int
-}
+		var images []image.ImageLayer
+		for i, v := range v.Images {
+			deletePath = append(deletePath, v)
+			tempImg, _ := image.LoadImage(v)
+			images = append(images, image.ImageLayer{
+				Image: tempImg,
+				XPos:  i * width,
+				YPos:  0,
+			})
+		}
 
-// 图片合并
-func ImageCombine(imgs []ImageLayer, bgProperty BgProperty) (*image.RGBA, error) {
-	//创建背景
-	bgImg := image.NewRGBA(image.Rect(0, 0, bgProperty.Width, bgProperty.Length))
+		bg := image.BgProperty{
+			Width:  width * len(images),
+			Length: height,
+		}
+		// 合成图片
+		res, err := image.CombineImage(images, bg)
+		if err != nil {
+			log.Printf("Error generating banner: %+v\n", err)
+		}
 
-	//创建需要合并图片
-	for _, img := range imgs {
-		//set image offset
-		offset := image.Pt(img.XPos, img.YPos)
+		// 保存图片
+		err = image.SaveImage(combineFileName, v.Dir, res)
+		if err != nil {
+			log.Printf("Error creating image file: %+v\n", err)
+			return
+		}
 
-		//combine the image
-		draw.Draw(bgImg, img.Image.Bounds().Add(offset), img.Image, image.ZP, draw.Over)
+		// 删除源文件
+		for _, v := range deletePath {
+			_ = os.Remove(v)
+		}
+
+		log.Println("Image Generated")
 	}
-
-	return bgImg, nil
-}
-
-// 加载图片
-func LoadImage(path string) (img image.Image, err error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-	img, _, err = image.Decode(file)
-	return
-}
-
-// 存储
-func SaveImage(f string, m image.Image) error {
-	var opt jpeg.Options
-	opt.Quality = 80
-	out, err := os.Create("./" + f)
-	if err != nil {
-		log.Printf("Error creating image file: %+v\n", err)
-		return err
-	}
-
-	return jpeg.Encode(out, m, &opt)
 }
