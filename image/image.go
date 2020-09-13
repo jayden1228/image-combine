@@ -52,7 +52,7 @@ func LoadImage(path string) (img image.Image, err error) {
 // 存储
 func SaveImage(f string, dir string, m image.Image) error {
 	var opt jpeg.Options
-	opt.Quality = 100
+	opt.Quality = 80
 	out, err := os.Create(dir + "/" + f)
 	if err != nil {
 		log.Printf("Error creating image file: %+v\n", err)

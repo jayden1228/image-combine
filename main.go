@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// 遍历所有目录
-	result, _ := walk.GetAllFileIncludeSubFolder("/Users/chuangkegongchang/Downloads/Reveal")
+	result, _ := walk.GetAllFileIncludeSubFolder("/Users/zouwenhui/Downloads/Reveal")
 	// 过滤空目录
 	result = model.FilterEmptyImages(result)
 	// 拼接图片
