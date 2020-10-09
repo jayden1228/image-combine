@@ -29,7 +29,6 @@ func GetAllFileIncludeSubFolder(folder string) ([]model.ImageResource, error) {
 			ext := filepath.Ext(path)
 			if ext == ".png" || ext == ".jpg" {
 				model.AppendImage(result, filepath.Dir(path), path)
-				//result = append(result, path)
 			} else {
 				_ = os.Remove(path)
 			}

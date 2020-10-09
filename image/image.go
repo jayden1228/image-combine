@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/draw"
 	"image/jpeg"
+	"image/png"
 	"log"
 	"os"
 )
@@ -50,14 +51,28 @@ func LoadImage(path string) (img image.Image, err error) {
 }
 
 // 存储
-func SaveImage(f string, dir string, m image.Image) error {
+func SaveImage(path string, m image.Image) error {
 	var opt jpeg.Options
 	opt.Quality = 100
-	out, err := os.Create(dir + "/" + f)
+	out, err := os.Create(path)
 	if err != nil {
 		log.Printf("Error creating image file: %+v\n", err)
 		return err
 	}
 
 	return jpeg.Encode(out, m, &opt)
+}
+
+// 存储png
+func SavePngImage(path string, m image.Image) error {
+	out, err := os.Create(path)
+	if err != nil {
+		log.Printf("Error creating image file: %+v\n", err)
+		return err
+	}
+	enc := png.Encoder{
+		CompressionLevel: png.BestSpeed,
+		BufferPool:       nil,
+	}
+	return enc.Encode(out, m)
 }
